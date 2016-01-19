@@ -539,5 +539,35 @@ namespace SQLite.Net.Async
                 }
             }, cancellationToken, _taskCreationOptions, _taskScheduler ?? TaskScheduler.Default);
         }
+
+        [PublicAPI]
+        public Task<List<Dictionary<string, object>>> QueryAsync([NotNull] string sql, [NotNull] params object[] args)
+        {
+            return QueryAsync(CancellationToken.None, sql, args);
+        }
+
+        [PublicAPI]
+        public Task<List<Dictionary<string, object>>> QueryAsync(CancellationToken cancellationToken, [NotNull] string sql, params object[] args)
+        {
+            if (sql == null)
+            {
+                throw new ArgumentNullException("sql");
+            }
+            if (args == null)
+            {
+                throw new ArgumentNullException("args");
+            }
+            return Task.Factory.StartNew(() =>
+            {
+                cancellationToken.ThrowIfCancellationRequested();
+                var conn = GetConnection();
+                using (conn.Lock())
+                {
+                    cancellationToken.ThrowIfCancellationRequested();
+                    return conn.Query(sql, args);
+                }
+            }, cancellationToken, _taskCreationOptions, _taskScheduler ?? TaskScheduler.Default);
+        }
+
     }
 }

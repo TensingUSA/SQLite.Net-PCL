@@ -96,6 +96,13 @@ namespace SQLite.Net
             return ExecuteDeferredQuery<T>(map).ToList();
         }
 
+        [PublicAPI]
+        public List<Dictionary<string, object>> ExecuteQuery()
+        {
+            return ExecuteDeferredQuery().ToList();
+        }
+
+
         /// <summary>
         ///     Invoked every time an instance is loaded from the database.
         /// </summary>
@@ -151,6 +158,60 @@ namespace SQLite.Net
                 _sqlitePlatform.SQLiteApi.Finalize(stmt);
             }
         }
+
+        [PublicAPI]
+        public IEnumerable<Dictionary<string, object>> ExecuteDeferredQuery()
+        {
+            _conn.TraceListener.WriteLine("Executing Query: {0}", this);
+
+            var stmt = Prepare();
+            try
+            {
+                var cols = new string[_sqlitePlatform.SQLiteApi.ColumnCount(stmt)];
+
+                for (int i = 0; i < cols.Length; i++)
+                {
+                    var name = _sqlitePlatform.SQLiteApi.ColumnName16(stmt, i);
+                    cols[i] = name;
+                }
+
+                while (_sqlitePlatform.SQLiteApi.Step(stmt) == Result.Row)
+                {
+                    var obj = new Dictionary<string, object>();
+                    for (int i = 0; i < cols.Length; i++)
+                    {
+                        var colType = _sqlitePlatform.SQLiteApi.ColumnType(stmt, i);
+
+                        Type targetType;
+                        switch (colType)
+                        {
+                            case ColType.Text:
+                                targetType = typeof(string);
+                                break;
+                            case ColType.Integer:
+                                targetType = typeof(int);
+                                break;
+                            case ColType.Float:
+                                targetType = typeof(double);
+                                break;
+                            default:
+                                targetType = typeof(object);
+                                break;
+                        }
+
+                        var val = ReadCol(stmt, i, colType, targetType);
+                        obj.Add(cols[i], val);
+                    }
+                    OnInstanceCreated(obj);
+                    yield return obj;
+                }
+            }
+            finally
+            {
+                _sqlitePlatform.SQLiteApi.Finalize(stmt);
+            }
+        }
+
 
         [PublicAPI]
         [CanBeNull]

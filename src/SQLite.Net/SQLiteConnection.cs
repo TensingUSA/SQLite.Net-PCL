@@ -770,6 +770,21 @@ namespace SQLite.Net
             return cmd.ExecuteDeferredQuery<object>(map);
         }
 
+        [PublicAPI]
+        public List<Dictionary<string, object>> Query(string query, params object[] args)
+        {
+            var cmd = CreateCommand(query, args);
+            return cmd.ExecuteQuery();
+        }
+
+        [PublicAPI]
+        public IEnumerable<Dictionary<string, object>> DeferredQuery(string query, params object[] args)
+        {
+            var cmd = CreateCommand(query, args);
+            return cmd.ExecuteDeferredQuery();
+        }
+
+
         /// <summary>
         ///     Returns a queryable interface to the table represented by the given type.
         /// </summary>
