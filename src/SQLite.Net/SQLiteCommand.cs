@@ -352,7 +352,14 @@ namespace SQLite.Net
                 }
                 else if (value is DateTimeOffset)
                 {
-                    isqLite3Api.BindInt64(stmt, index, ((DateTimeOffset) value).UtcTicks);
+                    if (storeDateTimeAsTicks)
+                    {
+                        isqLite3Api.BindInt64(stmt, index, ((DateTimeOffset)value).Ticks);
+                    }
+                    else
+                    {
+                        isqLite3Api.BindText16(stmt, index, ((DateTimeOffset)value).ToString("yyyy-MM-dd HH:mm:ss"), -1, NegativePointer);
+                    }
                 }
                 else if (value is ISerializable<DateTime>)
                 {
@@ -472,7 +479,20 @@ namespace SQLite.Net
             }
             if (clrType == typeof (DateTimeOffset))
             {
-                return new DateTimeOffset(_sqlitePlatform.SQLiteApi.ColumnInt64(stmt, index), TimeSpan.Zero);
+                if (_conn.StoreDateTimeAsTicks)
+                {
+                    return new DateTimeOffset(_sqlitePlatform.SQLiteApi.ColumnInt64(stmt, index), TimeSpan.Zero);
+                }
+                else
+                {
+                    DateTimeOffset dto = DateTimeOffset.MinValue;
+
+                    try
+                    { DateTimeOffset.TryParse(_sqlitePlatform.SQLiteApi.ColumnText16(stmt, index), out dto); }
+                    catch { }
+
+                    return dto;
+                }
             }
             if (interfaces.Contains(typeof (ISerializable<DateTime>)))
             {
