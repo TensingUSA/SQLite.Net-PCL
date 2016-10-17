@@ -39,7 +39,7 @@ namespace SQLite.Net
 
         private readonly SQLiteConnection _conn;
         private readonly ISQLitePlatform _sqlitePlatform;
-        private const string DateTimeFormat = "yyyy-MM-ddTHH:mm:ss.fffffffZ";
+        private const string DateTimeFormat = "yyyy-MM-dd HH:mm:ss";
 
         internal SQLiteCommand(ISQLitePlatform platformImplementation, SQLiteConnection conn)
         {
@@ -406,12 +406,12 @@ namespace SQLite.Net
                 {
                     if (storeDateTimeAsTicks)
                     {
-                        long ticks = ((DateTime) value).ToUniversalTime().Ticks;
+                        long ticks = ((DateTime) value).Ticks;
                         isqLite3Api.BindInt64(stmt, index, ticks);
                     }
                     else
                     {
-                        string val = ((DateTime) value).ToUniversalTime().ToString(DateTimeFormat, CultureInfo.InvariantCulture);
+                        string val = ((DateTime)value).ToString(DateTimeFormat, CultureInfo.InvariantCulture);
                         isqLite3Api.BindText16(stmt, index, val, -1, NegativePointer);
                     }
                 }
@@ -423,19 +423,19 @@ namespace SQLite.Net
                     }
                     else
                     {
-                        isqLite3Api.BindText16(stmt, index, ((DateTimeOffset)value).ToString("yyyy-MM-dd HH:mm:ss"), -1, NegativePointer);
+                        isqLite3Api.BindText16(stmt, index, ((DateTimeOffset)value).ToString(DateTimeFormat), -1, NegativePointer);
                     }
                 }
                 else if (value is ISerializable<DateTime>)
                 {
                     if (storeDateTimeAsTicks)
                     {
-                        long ticks = ((ISerializable<DateTime>) value).Serialize().ToUniversalTime().Ticks;
+                        long ticks = ((ISerializable<DateTime>) value).Serialize().Ticks;
                         isqLite3Api.BindInt64(stmt, index, ticks);
                     }
                     else
                     {
-                        string val = ((ISerializable<DateTime>) value).Serialize().ToUniversalTime().ToString(DateTimeFormat, CultureInfo.InvariantCulture);
+                        string val = ((ISerializable<DateTime>)value).Serialize().ToString(DateTimeFormat, CultureInfo.InvariantCulture);
                         isqLite3Api.BindText16(stmt, index, val, -1, NegativePointer);
                     }
                 }
